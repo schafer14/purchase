@@ -6,4 +6,6 @@ A secondary goal is to demonstrate how executable specifications can be develope
 
 ## Rough idea of how it works:
 
-![mind_map](./docs/mud.pdf)
+![mind_map](./docs/mud.png)
+
+> Note: the customer holding the money bag is essential to this process!
