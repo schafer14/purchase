@@ -3,18 +3,29 @@ package purchase
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 )
 
 type service struct {
-	registry PaymentRegistry
+	registry       PaymentRegistry
+	newOrderPolicy NewOrderPolicy
 }
 
-func New(registry PaymentRegistry) PurchaseSystem {
-	return &service{registry}
+func New(registry PaymentRegistry, newOrderPolicy NewOrderPolicy) PurchaseSystem {
+	return &service{registry, newOrderPolicy}
 }
 
 func (s *service) CreateOrder(ctx context.Context, no NewOrder) (OrderID, error) {
+	passed, err := s.newOrderPolicy(ctx, no)
+	if err != nil {
+		return "", errors.Wrap(err, "create order: could not fetch newOrderPolicy")
+	}
+
+	if !passed {
+		return "", ErrCreateOrderValidation
+	}
+
 	id := ksuid.New().String()
 
 	total := s.calculateTotal(no)

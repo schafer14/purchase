@@ -47,3 +47,7 @@ Feature: Making a payment
     Then payment 1 should be consumed
     And order 1 should be marked as over-paid
     And order 1 should have $-7.00 USD remaining
+
+  Scenario: Invalid order
+    When an order fails to pass validation 
+    Then a "invalid order" error should be returned

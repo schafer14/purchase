@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/cucumber/godog v0.12.2
+	github.com/pkg/errors v0.8.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/pflag v1.0.5
 )

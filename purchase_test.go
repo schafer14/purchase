@@ -3,6 +3,7 @@ package purchase_test
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cucumber/godog"
 	"github.com/schafer14/purchase"
@@ -21,6 +22,7 @@ const (
 var (
 	orderIDs   []purchase.OrderID   = []purchase.OrderID{}
 	paymentIDs []purchase.PaymentID = []purchase.PaymentID{}
+	errors     []error              = []error{}
 )
 
 func ps(ctx context.Context) purchase.PurchaseSystem {
@@ -127,16 +129,48 @@ func paymentReceived(ctx context.Context, dollars, cents int, currency string) e
 	return nil
 }
 
+func invalidOrder(ctx context.Context) error {
+
+	newOrder := purchase.NewOrder{
+		Products: []purchase.Product{
+			{ID: "invalid-product-id", Quantity: 1, UnitPrice: 3},
+		},
+		Purchaser: purchase.Purchaser{
+			ID: ctx.Value(ckUserID).(purchase.UserID),
+		},
+	}
+
+	_, err := ctx.Value(ckPurchaseSystem).(purchase.PurchaseSystem).CreateOrder(ctx, newOrder)
+	if err != nil {
+		errors = append(errors, err)
+	}
+
+	return nil
+}
+
+func errorReturned(ctx context.Context, errorMsg string) error {
+	if len(errors) != 1 {
+		return fmt.Errorf("expected a single error")
+	}
+
+	if !strings.Contains(errors[0].Error(), errorMsg) {
+		return fmt.Errorf(`expected error msg to contain "%s", got "%s"`, errorMsg, errors[0].Error())
+	}
+
+	return nil
+}
+
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 
 		registry := inmemory.New()
-		purchaseSystem := purchase.New(registry)
+		purchaseSystem := purchase.New(registry, newOrderPolicy)
 
 		ctx = context.WithValue(ctx, ckPurchaseSystem, purchaseSystem)
 		ctx = context.WithValue(ctx, ckUserID, "user-1")
 		orderIDs = []purchase.OrderID{}
 		paymentIDs = []purchase.PaymentID{}
+		errors = []error{}
 
 		return ctx, nil
 	})
@@ -147,5 +181,14 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^order (\d+) should have \$(-?\d+)\.(\d+) ([A-Z]+) remaining$`, orderAmountRemaining)
 	ctx.Step(`^a payment is received for \$(\d+)\.(\d+) ([A-Z]+)$`, paymentReceived)
 	ctx.Step(`^payment (\d+) is used for order (\d+)$`, paymentUsed)
+	ctx.Step(`^an order fails to pass validation$`, invalidOrder)
+	ctx.Step(`^a "([A-Za-z ]+)" error should be returned$`, errorReturned)
 
+}
+
+func newOrderPolicy(ctx context.Context, no purchase.NewOrder) (bool, error) {
+	if no.Products[0].ID == "invalid-product-id" {
+		return false, nil
+	}
+	return true, nil
 }

@@ -16,12 +16,13 @@ type PurchaseSystem interface {
 }
 
 var (
-	ErrDoubleSpend         = errors.New("double spend")
-	ErrInsufficientPayment = errors.New("insufficent payment")
-	ErrOrderNotFound       = errors.New("order not found")
-	ErrPaymentNotFound     = errors.New("payment not found")
-	ErrNetworkError        = errors.New("network error")
-	ErrPaymentFound        = errors.New("payment found")
+	ErrDoubleSpend           = errors.New("double spend")
+	ErrInsufficientPayment   = errors.New("insufficent payment")
+	ErrOrderNotFound         = errors.New("order not found")
+	ErrPaymentNotFound       = errors.New("payment not found")
+	ErrNetworkError          = errors.New("network error")
+	ErrPaymentFound          = errors.New("payment found")
+	ErrCreateOrderValidation = errors.New("invalid order")
 )
 
 type NewOrder struct {
@@ -80,6 +81,8 @@ type Recipient struct{}
 type TrackingInfoUpdate struct{}
 
 type CurrencyBalance struct{}
+
+type NewOrderPolicy func(ctx context.Context, no NewOrder) (bool, error)
 
 type PaymentRegistry interface {
 	StoreOrder(ctx context.Context, order Order) error
