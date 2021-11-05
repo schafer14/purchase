@@ -1,8 +1,6 @@
-Feature: Payment system
+Feature: Making a payment
 
-  A user should be able to pay for stuff and get
-  good visibility on the status of the payment 
-  and the tracking of the products.
+  A user should be able to pay for stuff.
 
   Scenario: Completed payment
     Given 1 order with a total payment of $32.00 USD
